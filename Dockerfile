@@ -18,14 +18,16 @@ RUN npm run build
 # 生产阶段
 FROM nginx:alpine
 
+ENV PORT=3000
+
 # 复制构建产物
 COPY --from=builder /app/build /usr/share/nginx/html
 
-# 复制 nginx 配置
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# 复制 nginx 配置模板
+COPY nginx.conf /etc/nginx/conf.d/default.conf.template
 
 # 暴露端口
 EXPOSE 3000
 
-# 启动 nginx
-CMD ["nginx", "-g", "daemon off;"]
+# 运行前用 envsubst 注入 $PORT 到 nginx 配置
+CMD ["/bin/sh", "-c", "envsubst < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
