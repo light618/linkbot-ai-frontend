@@ -33,5 +33,6 @@ RUN apk add --no-cache gettext
 EXPOSE 3000
 
 # 运行前用 envsubst 注入环境变量到 nginx 配置
-# 设置默认值并注入所有变量
-CMD ["/bin/sh", "-c", "export API_BASE=${API_BASE:-http://localhost:8080} && export WS_BASE=${WS_BASE:-http://localhost:8080} && envsubst '$$PORT $$API_BASE $$WS_BASE' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
+# 将Railway中的REACT_APP_API_URL映射为API_BASE，REACT_APP_PROXY_PUBLIC_BASE映射为WS_BASE
+# 如果变量未设置，使用空值（nginx会报错，便于发现配置问题）
+CMD ["/bin/sh", "-c", "export API_BASE=${REACT_APP_API_URL:-} && export WS_BASE=${REACT_APP_PROXY_PUBLIC_BASE:-} && envsubst '$$PORT $$API_BASE $$WS_BASE' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -t && nginx -g 'daemon off;'"]
