@@ -6,7 +6,7 @@ WORKDIR /app
 # 复制 package 文件
 COPY package*.json ./
 
-# 安装依赖
+# 安装依赖（包括devDependencies，React构建需要）
 RUN npm ci
 
 # 复制源代码
@@ -18,14 +18,21 @@ RUN npm run build
 # 生产阶段
 FROM nginx:alpine
 
+ENV PORT=3000
+
 # 复制构建产物
 COPY --from=builder /app/build /usr/share/nginx/html
 
-# 复制 nginx 配置
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# 复制 nginx 配置模板
+COPY nginx.conf /etc/nginx/conf.d/default.conf.template
+
+# 安装 envsubst（来自 gettext），用于将 $PORT 注入到 nginx 配置
+RUN apk add --no-cache gettext
 
 # 暴露端口
 EXPOSE 3000
 
-# 启动 nginx
-CMD ["nginx", "-g", "daemon off;"]
+# 运行前用 envsubst 注入环境变量到 nginx 配置
+# 将Railway中的REACT_APP_API_URL映射为API_BASE，REACT_APP_PROXY_PUBLIC_BASE映射为WS_BASE
+# 如果变量未设置，使用空值（nginx会报错，便于发现配置问题）
+CMD ["/bin/sh", "-c", "export API_BASE=${REACT_APP_API_URL:-} && export WS_BASE=${REACT_APP_PROXY_PUBLIC_BASE:-} && envsubst '$$PORT $$API_BASE $$WS_BASE' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -t && nginx -g 'daemon off;'"]
