@@ -32,5 +32,6 @@ RUN apk add --no-cache gettext
 # 暴露端口
 EXPOSE 3000
 
-# 运行前用 envsubst 注入 $PORT 到 nginx 配置
-CMD ["/bin/sh", "-c", "envsubst < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
+# 运行前用 envsubst 注入环境变量到 nginx 配置
+# 设置默认值并注入所有变量
+CMD ["/bin/sh", "-c", "export API_BASE=${API_BASE:-http://localhost:8080} && export WS_BASE=${WS_BASE:-http://localhost:8080} && envsubst '$$PORT $$API_BASE $$WS_BASE' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
