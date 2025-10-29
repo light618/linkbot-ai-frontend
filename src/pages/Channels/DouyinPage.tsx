@@ -270,9 +270,9 @@ const DouyinPage: React.FC = () => {
   // 抖音扫码授权
   const handleDouyinAuth = async () => {
     try {
-      // 直接跳转到Go代理的授权URL（从环境变量读取外网域名）
-      const proxyBase = (process.env.REACT_APP_PROXY_PUBLIC_BASE || '').trim() || 'https://linkbot-ai-production.up.railway.app';
-      const authUrl = `${proxyBase}/oauth/douyin`;
+      // 使用相对路径，nginx会代理到Go服务
+      // Go代理服务的OAuth路径应该也通过nginx代理
+      const authUrl = `/oauth/douyin`;
       window.open(authUrl, '_blank', 'width=500,height=600');
     } catch (error) {
       message.error('授权失败，请重试');
@@ -281,8 +281,8 @@ const DouyinPage: React.FC = () => {
 
   // 显示二维码授权
   const showQRCodeAuth = () => {
-    const proxyBase = (process.env.REACT_APP_PROXY_PUBLIC_BASE || '').trim() || 'https://linkbot-ai-production.up.railway.app';
-    setAuthUrl(`${proxyBase}/oauth/douyin`);
+    // 使用相对路径
+    setAuthUrl(`/oauth/douyin`);
     setQrModalVisible(true);
     
     // 移除自动触发，等待用户扫码

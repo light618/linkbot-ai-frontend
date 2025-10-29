@@ -3,8 +3,9 @@ import { message } from 'antd';
 import { ApiResponse } from '../types';
 
 // 创建 axios 实例
+// 使用相对路径，让 nginx 代理到后端
 const api: AxiosInstance = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'https://linkbot-ai-production.up.railway.app/api',
+  baseURL: '/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
