@@ -35,4 +35,4 @@ EXPOSE 3000
 # 运行前用 envsubst 注入环境变量到 nginx 配置
 # 将Railway中的REACT_APP_API_URL映射为API_BASE，REACT_APP_PROXY_PUBLIC_BASE映射为WS_BASE
 # 如果变量未设置，使用空值（nginx会报错，便于发现配置问题）
-CMD ["/bin/sh", "-c", "export API_BASE=${REACT_APP_API_URL:-} && export WS_BASE=${REACT_APP_PROXY_PUBLIC_BASE:-} && envsubst '$$PORT $$API_BASE $$WS_BASE' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -t && nginx -g 'daemon off;'"]
+CMD ["/bin/sh", "-c", "if [ -z \"${REACT_APP_API_URL}\" ]; then echo 'ERROR: REACT_APP_API_URL environment variable is not set!' && exit 1; fi && if [ -z \"${REACT_APP_PROXY_PUBLIC_BASE}\" ]; then echo 'ERROR: REACT_APP_PROXY_PUBLIC_BASE environment variable is not set!' && exit 1; fi && export API_BASE=${REACT_APP_API_URL} && export WS_BASE=${REACT_APP_PROXY_PUBLIC_BASE} && envsubst '$$PORT $$API_BASE $$WS_BASE' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -t && nginx -g 'daemon off;'"]
