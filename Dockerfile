@@ -26,6 +26,9 @@ COPY --from=builder /app/build /usr/share/nginx/html
 # 复制 nginx 配置模板
 COPY nginx.conf /etc/nginx/conf.d/default.conf.template
 
+# 安装 envsubst（来自 gettext），用于将 $PORT 注入到 nginx 配置
+RUN apk add --no-cache gettext
+
 # 暴露端口
 EXPOSE 3000
 
