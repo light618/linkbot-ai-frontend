@@ -39,10 +39,11 @@ api.interceptors.response.use(
   (response: AxiosResponse<ApiResponse>) => {
     const { data } = response;
     
-    // 如果 API 返回失败，显示错误消息
-    if (!data.success) {
-      message.error(data.message || '请求失败');
-      return Promise.reject(new Error(data.message || '请求失败'));
+    // 放宽判断：仅当存在 success 且明确为 false 时，才视为业务失败
+    if (Object.prototype.hasOwnProperty.call(data || {}, 'success') && (data as any).success === false) {
+      const msg = (data as any).message || '请求失败';
+      message.error(msg);
+      return Promise.reject(new Error(msg));
     }
     
     return response;
@@ -50,7 +51,7 @@ api.interceptors.response.use(
   (error) => {
     // 处理 HTTP 错误
     if (error.response) {
-      const { status, data } = error.response;
+      const { status, data } = error.response as any;
       
       switch (status) {
         case 401:
@@ -69,7 +70,7 @@ api.interceptors.response.use(
           message.error('服务器内部错误');
           break;
         default:
-          message.error(data?.message || '请求失败');
+          message.error((data && data.message) || '请求失败');
       }
     } else if (error.request) {
       message.error('网络连接失败，请检查网络');
