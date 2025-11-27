@@ -645,6 +645,7 @@ const Dashboard: React.FC = () => {
             <ResponsiveContainer width="100%" height={300}>
               <RadarChart data={mockRadarData}>
                 <PolarGrid />
+                {/* @ts-ignore - React 19 compatibility issue with recharts */}
                 <PolarAngleAxis dataKey="subject" />
                 <PolarRadiusAxis angle={30} domain={[0, 150]} />
                 <Radar name="当前" dataKey="A" stroke="#1890ff" fill="#1890ff" fillOpacity={0.6} />

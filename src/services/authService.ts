@@ -1,5 +1,5 @@
 import api from './api';
-import { User, ApiResponse } from '../types';
+import { User } from '../types';
 
 export interface LoginRequest {
   username: string;
@@ -24,29 +24,40 @@ export interface LoginResponse {
   };
 }
 
+function unwrap<T = any>(payload: any): T {
+  // 兼容 { success, data } 与 直接数据 两种格式
+  if (payload && typeof payload === 'object' && 'data' in payload && (payload.data !== undefined)) {
+    return payload.data as T;
+  }
+  return payload as T;
+}
+
 export class AuthService {
   // 用户登录
   async login(loginData: LoginRequest): Promise<LoginResponse> {
-    const response = await api.post<ApiResponse<LoginResponse>>('/auth/login', loginData);
-    return response.data.data;
+    const response = await api.post('/auth/login', loginData);
+    return unwrap<LoginResponse>(response.data);
   }
 
   // 用户注册
   async register(registerData: RegisterRequest): Promise<LoginResponse> {
-    const response = await api.post<ApiResponse<LoginResponse>>('/auth/register', registerData);
-    return response.data.data;
+    const response = await api.post('/auth/register', registerData);
+    return unwrap<LoginResponse>(response.data);
   }
 
   // 获取当前用户信息
   async getCurrentUser(): Promise<User> {
-    const response = await api.get<ApiResponse<{ user: User }>>('/auth/me');
-    return response.data.data.user;
+    const response = await api.get('/auth/me');
+    const data = unwrap<{ user: User } | User>(response.data);
+    // 兼容 { user } 或直接 User
+    // @ts-ignore
+    return (data && (data.user || data)) as User;
   }
 
   // 刷新 token
   async refreshToken(): Promise<{ token: string }> {
-    const response = await api.post<ApiResponse<{ token: string }>>('/auth/refresh');
-    return response.data.data;
+    const response = await api.post('/auth/refresh');
+    return unwrap<{ token: string }>(response.data);
   }
 
   // 修改密码

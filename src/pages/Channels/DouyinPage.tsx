@@ -279,13 +279,40 @@ const DouyinPage: React.FC = () => {
     }
   };
 
-  // 显示二维码授权
-  const showQRCodeAuth = () => {
-    // 使用相对路径
-    setAuthUrl(`/oauth/douyin`);
-    setQrModalVisible(true);
-    
-    // 移除自动触发，等待用户扫码
+  // 显示二维码授权 - 简化流程，直接显示二维码
+  const showQRCodeAuth = async () => {
+    try {
+      setLoading(true);
+      console.log('开始获取授权URL...');
+      
+      // 直接获取用户授权URL并显示二维码
+      try {
+        const response = await fetch('/api/channels/douyin/oauth/url?format=json');
+        const data = await response.json();
+        console.log('授权URL响应:', data);
+        
+        if (data.success && data.data?.authUrl) {
+          setAuthUrl(data.data.authUrl);
+          setQrModalVisible(true);
+          console.log('授权URL已设置，显示二维码弹窗');
+        } else {
+          // 降级方案：直接使用Go服务地址
+          console.log('使用降级方案，直接使用Go服务地址');
+          setAuthUrl('http://localhost:8080/oauth/douyin');
+          setQrModalVisible(true);
+        }
+      } catch (fetchError) {
+        console.error('获取授权URL错误:', fetchError);
+        // 降级方案：直接使用Go服务地址
+        setAuthUrl('http://localhost:8080/oauth/douyin');
+        setQrModalVisible(true);
+      }
+    } catch (error) {
+      console.error('授权流程错误:', error);
+      message.error('启动授权流程失败');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDisconnectAccount = async (accountId: string) => {
@@ -707,6 +734,12 @@ const DouyinPage: React.FC = () => {
           <Button key="cancel" onClick={() => setQrModalVisible(false)}>
             取消
           </Button>,
+          <Button key="whitelist" onClick={() => {
+            window.open('http://localhost:8080/oauth/douyin/whitelist', '_blank', 'width=500,height=600');
+            message.warning('请先完成白名单授权，然后再扫码进行用户授权');
+          }}>
+            先进行白名单授权
+          </Button>,
           <Button key="open" type="primary" onClick={handleDouyinAuth}>
             在新窗口打开
           </Button>,
@@ -715,9 +748,25 @@ const DouyinPage: React.FC = () => {
       >
         <div style={{ textAlign: 'center', padding: '20px 0' }}>
           <Alert
-            message="授权说明"
-            description="请使用抖音APP扫描二维码完成授权，授权后将自动获取您的抖音账号信息并开始监听直播间和短视频评论。"
-            type="info"
+            message="授权流程说明"
+            description={
+              <div style={{ textAlign: 'left' }}>
+                <p style={{ marginBottom: '8px' }}>抖音授权需要<strong>两步完成</strong>：</p>
+                <ol style={{ paddingLeft: '20px', margin: 0 }}>
+                  <li style={{ marginBottom: '4px' }}>
+                    <strong>第一步：白名单授权</strong>（必需）
+                    <br />
+                    <span style={{ color: '#666', fontSize: '12px' }}>点击下方"先进行白名单授权"按钮</span>
+                  </li>
+                  <li>
+                    <strong>第二步：用户授权</strong>
+                    <br />
+                    <span style={{ color: '#666', fontSize: '12px' }}>使用抖音APP扫描下方二维码</span>
+                  </li>
+                </ol>
+              </div>
+            }
+            type="warning"
             showIcon
             style={{ marginBottom: '20px' }}
           />
